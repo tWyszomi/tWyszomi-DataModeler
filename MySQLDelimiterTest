@@ -1,0 +1,269 @@
+
+CREATE TABLE Appointment
+(
+	AppointmentId INTEGER NOT NULL ,
+	FacilityId INT NOT NULL ,
+	ScheduledDateTime DATE NOT NULL ,
+	AllottedMinutes INTEGER NOT NULL ,
+	Service VARCHAR(75) NOT NULL ,
+	CaseId INT NOT NULL 
+);
+
+ALTER TABLE Appointment
+	ADD  CONSTRAINT PK_Appointment PRIMARY KEY  ( AppointmentId ASC );
+
+CREATE INDEX  K_FacilitySchedule ON  Appointment
+(
+	FacilityId ASC,
+	ScheduledDateTime ASC
+);
+
+CREATE INDEX  K_CaseSchedule ON  Appointment
+(
+	CaseId ASC,
+	ScheduledDateTime ASC
+);
+
+CREATE TABLE Case_
+(
+	CaseId INT NOT NULL ,
+	CaseManager_PersonId CHAR(18) NOT NULL ,
+	Patient_PersonId CHAR(18) NOT NULL ,
+	CaseName VARCHAR(75) NULL ,
+	CreatedDate DATE  DEFAULT Current_DateTime NULL ,
+	InitialEvalDate DATE NULL ,
+	DischargeDate DATE CONSTRAINT DischargeDateConstraint CHECK (DischargeDate IS NULL OR DischargeDate > CreatedDate) NULL 
+);
+
+ALTER TABLE Case_
+	ADD  CONSTRAINT PK_Case PRIMARY KEY  ( CaseId ASC );
+
+CREATE TABLE Case_Proficiency
+(
+	ProficiencyId INT NOT NULL ,
+	CaseId INT NOT NULL 
+);
+
+ALTER TABLE Case_Proficiency
+	ADD  CONSTRAINT XPKCase_Proficiency PRIMARY KEY  ( ProficiencyId ASC, CaseId ASC );
+
+CREATE TABLE CaseManager
+(
+	PersonId CHAR(18) NOT NULL 
+);
+
+ALTER TABLE CaseManager
+	ADD  CONSTRAINT XPKCaseManager PRIMARY KEY  ( PersonId ASC );
+
+CREATE TABLE Facility
+(
+	FacilityId INT NOT NULL ,
+	FacilityName VARCHAR(75) NOT NULL ,
+	Address VARCHAR(255) NULL 
+);
+
+ALTER TABLE Facility
+	ADD  CONSTRAINT PK_Facility PRIMARY KEY  ( FacilityId ASC );
+
+CREATE UNIQUE INDEX  UK_FacilityName ON  Facility
+(
+	FacilityName ASC
+);
+
+CREATE TABLE Patient
+(
+	PersonId CHAR(18) NOT NULL 
+);
+
+ALTER TABLE Patient
+	ADD  CONSTRAINT XPKPatient PRIMARY KEY  ( PersonId ASC );
+
+CREATE TABLE Person
+(
+	PersonId CHAR(18) NOT NULL ,
+	FirstName VARCHAR(30) NULL ,
+	MiddleName VARCHAR(30) NULL ,
+	LastName VARCHAR(30) NULL ,
+	Address VARCHAR(255) NULL ,
+	BirthDate DATE NULL ,
+	Test VARCHAR(255) NULL ,
+	TrigField CHAR(18) NULL 
+);
+
+ALTER TABLE Person
+	ADD  CONSTRAINT PK_Person PRIMARY KEY  ( PersonId ASC );
+
+CREATE INDEX  K_NameBirthDate ON  Person
+(
+	LastName ASC,
+	FirstName ASC,
+	BirthDate ASC
+);
+
+CREATE INDEX  K_BirthDateName ON  Person
+(
+	BirthDate ASC,
+	LastName ASC,
+	FirstName ASC
+);
+
+CREATE TABLE Proficiency
+(
+	ProficiencyId INT NOT NULL ,
+	ProficiencyName VARCHAR(75) NULL 
+);
+
+ALTER TABLE Proficiency
+	ADD  CONSTRAINT PK_Proficiency PRIMARY KEY  ( ProficiencyId ASC );
+
+CREATE UNIQUE INDEX  UK_ProficiencyName ON  Proficiency
+(
+	ProficiencyName ASC
+);
+
+CREATE TABLE Resource
+(
+	ResourceId INT NOT NULL ,
+	FacilityId INT NOT NULL ,
+	Name VARCHAR(75) NOT NULL ,
+	Quantity INTEGER NOT NULL ,
+	ResourceType ENUM('ROOM','EQUIP') NULL 
+);
+
+ALTER TABLE Resource
+	ADD  CONSTRAINT PK_Resource PRIMARY KEY  ( ResourceId ASC );
+
+CREATE INDEX  K_FacilityResources ON  Resource
+(
+	FacilityId ASC,
+	Name ASC
+);
+
+CREATE TABLE Resource_Appointment
+(
+	ResourceId INT NOT NULL ,
+	AppointmentId INTEGER NOT NULL 
+);
+
+ALTER TABLE Resource_Appointment
+	ADD  CONSTRAINT XPKResource_Appointment PRIMARY KEY  ( ResourceId ASC, AppointmentId ASC );
+
+CREATE TABLE Therapist
+(
+	PersonId CHAR(18) NOT NULL 
+);
+
+ALTER TABLE Therapist
+	ADD  CONSTRAINT XPKTherapist PRIMARY KEY  ( PersonId ASC );
+
+CREATE TABLE Therapist_Proficiency
+(
+	PersonId CHAR(18) NOT NULL ,
+	ProficiencyId INT NOT NULL 
+);
+
+ALTER TABLE Therapist_Proficiency
+	ADD  CONSTRAINT XPKTherapist_Proficiency PRIMARY KEY  ( PersonId ASC, ProficiencyId ASC );
+
+CREATE TABLE Visit
+(
+	AppointmentId INTEGER NOT NULL ,
+	ArrivalTime TIME NOT NULL ,
+	Duration INTEGER NOT NULL 
+);
+
+ALTER TABLE Visit
+	ADD  CONSTRAINT XPKVisit PRIMARY KEY  ( AppointmentId ASC );
+
+ALTER TABLE Appointment
+	ADD  CONSTRAINT R_17 FOREIGN KEY (FacilityId) REFERENCES Facility (FacilityId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Appointment
+	ADD  CONSTRAINT R_18 FOREIGN KEY (CaseId) REFERENCES Case_ (CaseId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Case_
+	ADD  CONSTRAINT R_10 FOREIGN KEY (CaseManager_PersonId) REFERENCES CaseManager (PersonId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Case_
+	ADD  CONSTRAINT R_9 FOREIGN KEY (Patient_PersonId) REFERENCES Patient (PersonId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Case_Proficiency
+	ADD  CONSTRAINT R_16 FOREIGN KEY (ProficiencyId) REFERENCES Proficiency (ProficiencyId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Case_Proficiency
+	ADD  CONSTRAINT R_15 FOREIGN KEY (CaseId) REFERENCES Case_ (CaseId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE CaseManager
+	ADD  CONSTRAINT R_7 FOREIGN KEY (PersonId) REFERENCES Person (PersonId)
+		ON DELETE CASCADE 
+		ON UPDATE CASCADE ;
+
+ALTER TABLE Patient
+	ADD  CONSTRAINT R_8 FOREIGN KEY (PersonId) REFERENCES Person (PersonId)
+		ON DELETE CASCADE 
+		ON UPDATE CASCADE ;
+
+ALTER TABLE Resource
+	ADD  CONSTRAINT R_5 FOREIGN KEY (FacilityId) REFERENCES Facility (FacilityId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Resource_Appointment
+	ADD  CONSTRAINT R_3 FOREIGN KEY (ResourceId) REFERENCES Resource (ResourceId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Resource_Appointment
+	ADD  CONSTRAINT R_4 FOREIGN KEY (AppointmentId) REFERENCES Appointment (AppointmentId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Therapist
+	ADD  CONSTRAINT R_6 FOREIGN KEY (PersonId) REFERENCES Person (PersonId)
+		ON DELETE CASCADE 
+		ON UPDATE CASCADE ;
+
+ALTER TABLE Therapist_Proficiency
+	ADD  CONSTRAINT R_12 FOREIGN KEY (PersonId) REFERENCES Therapist (PersonId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Therapist_Proficiency
+	ADD  CONSTRAINT R_13 FOREIGN KEY (ProficiencyId) REFERENCES Proficiency (ProficiencyId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+ALTER TABLE Visit
+	ADD  CONSTRAINT R_1 FOREIGN KEY (AppointmentId) REFERENCES Appointment (AppointmentId)
+		ON DELETE NO ACTION 
+		ON UPDATE NO ACTION ;
+
+CREATE  Function Increment
+(
+InValue INT 
+) RETURNS INT
+DETERMINISTIC 
+CONTAINS SQL 
+SQL SECURITY INVOKER 
+	BEGIN
+  RETURN(InValue + 1);
+END
+
+;
+
+CREATE TRIGGER Trigger_597
+ BEFORE Insert ON Person FOR EACH ROW BEGIN
+  TrigField = 'TEST';
+END;
